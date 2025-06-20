@@ -1,0 +1,36 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: yarn install
+
+      - name: Build Docker image
+        run: docker build -t ghcr.io/${{ github.repository }}:${TAG_NAME} .
+        env:
+          TAG_NAME: $(echo ${{ github.ref_name }} | sed 's/^v//')
+
+      - name: Push to ghcr.io
+        run: |
+          docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
+          docker push ghcr.io/${{ github.repository }}:${TAG_NAME}
+        env:
+          TAG_NAME: $(echo ${{ github.ref_name }} | sed 's/^v//')
+
+      - name: Push to Docker Hub
+        run: |
+          docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_PASSWORD }}
+          docker tag ghcr.io/${{ github.repository }}:${TAG_NAME} ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.repository }}:${TAG_NAME}
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.repository }}:${TAG_NAME}
+        env:
+          TAG_NAME: $(echo ${{ github.ref_name }} | sed 's/^v//')
