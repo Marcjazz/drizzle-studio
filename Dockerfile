@@ -8,4 +8,6 @@ RUN corepack yarn install
 
 COPY . .
 
+EXPOSE 4983
+
 CMD corepack yarn drizzle-kit studio

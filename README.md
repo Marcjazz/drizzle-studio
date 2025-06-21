@@ -7,7 +7,7 @@ Drizzle Studio is a Docker container that provides a user interface for managing
 To run Drizzle Studio, use the following command:
 
 ```
-docker run -p 8080:8080 ghcr.io/<your-github-username>/drizzle:<tag>
+docker run -p 8080:8080 ghcr.io/marcjazz/drizzle-studio:latest
 ```
 
 Replace `<your-github-username>` with your GitHub username and `<tag>` with the tag of the image you want to run.
