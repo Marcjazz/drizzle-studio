@@ -19,4 +19,4 @@ To run Drizzle Studio, use the following command:
 
 ## Accessing Drizzle Studio
 
-When running Drizzle Studio in a Docker container, you can access it from your host machine by navigating to `http://localhost:8080` in your web browser.
+When running Drizzle Studio in a Docker container, you can access it from your host machine by navigating to `https://local.drizzle.studio` in your web browser.
