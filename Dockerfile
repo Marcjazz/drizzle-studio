@@ -10,4 +10,4 @@ COPY . .
 
 EXPOSE 4983
 
-CMD corepack yarn drizzle-kit studio
+CMD corepack yarn drizzle-kit studio --host 0.0.0.0
