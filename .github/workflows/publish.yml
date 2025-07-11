@@ -1,36 +1,39 @@
-name: Publish
+name: Build & Publish
 
 on:
-  push:
+  push:    
+    branches:
+      - "**"  # Build on all branches
     tags:
-      - "v*"
+      - "v*"  # Publish only on tags
 
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      packages: write  # Required for GHCR
+      contents: read
+
+    env:
+      TAG_NAME: ${{ github.ref_name }} # e.g. "v1.0.0"
+
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+
+      - name: Extract tag name without "v"
+        id: prep
+        run: echo "tag=${TAG_NAME#v}" >> $GITHUB_OUTPUT
+
+      - name: Log in to GitHub Container Registry (GHCR)
+        uses: docker/login-action@v3
         with:
-          node-version: 20
-      - run: yarn install
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build Docker image
-        run: docker build -t ghcr.io/${{ github.repository }}:${TAG_NAME} .
-        env:
-          TAG_NAME: $(echo ${{ github.ref_name }} | sed 's/^v//')
-
-      - name: Push to ghcr.io
-        run: |
-          docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
-          docker push ghcr.io/${{ github.repository }}:${TAG_NAME}
-        env:
-          TAG_NAME: $(echo ${{ github.ref_name }} | sed 's/^v//')
-
-      - name: Push to Docker Hub
-        run: |
-          docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_PASSWORD }}
-          docker tag ghcr.io/${{ github.repository }}:${TAG_NAME} ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.repository }}:${TAG_NAME}
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.repository }}:${TAG_NAME}
-        env:
-          TAG_NAME: $(echo ${{ github.ref_name }} | sed 's/^v//')
+      - name: Build and push Docker image to GHCR
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') }}
+          tags: ghcr.io/${{ github.repository }}:${{ steps.prep.outputs.tag }}
